@@ -286,7 +286,7 @@ class EXIFInfo(object):
         return self._get_int('Image Orientation') in {5, 6, 7, 8}
 
 
-def get_suffix(width, height, mode, quality=None):
+def get_suffix(width, height, mode, quality=None, offset=None, zoom=None):
     suffix = '' if width is None else str(width)
     if height is not None:
         suffix += 'x%s' % height
@@ -294,6 +294,11 @@ def get_suffix(width, height, mode, quality=None):
         suffix += '_%s' % mode.label
     if quality is not None:
         suffix += '_q%s' % quality
+    if offset is not None:
+        # assert offset len
+        suffix += '_%+d%+d' % offset
+    if zoom is not None:
+        suffix += '-z%d' % zoom
     return suffix
 
 
@@ -477,7 +482,7 @@ def compute_dimensions(width, height, source_width, source_height):
 
 def process_image(ctx, source_image, dst_filename,
                   width=None, height=None, mode=ThumbnailMode.DEFAULT,
-                  quality=None):
+                  quality=None, offset=None, zoom=None):
     """Build image from source image, optionally compressing and resizing.
 
     "source_image" is the absolute path of the source in the content directory,
@@ -493,19 +498,31 @@ def process_image(ctx, source_image, dst_filename,
         quality = get_quality(source_image)
 
     resize_key = ''
+    offset_key = ''
+    gravity = 'Center'
+    zoom_key = '100%'
     if width is not None:
         resize_key += str(width)
     if height is not None:
         resize_key += 'x' + str(height)
+    if offset is not None and len(offset) == 2:
+        offset_key = '%+d%+d' % ((offset[0] - width / 2), (offset[1] - height / 2))
+        gravity = 'NorthWest'
+    if zoom is not None:
+        zoom_key = '%d' % zoom + '%'
+        
+    print(gravity, offset_key,zoom_key, dst_filename)
 
     if mode == ThumbnailMode.STRETCH:
         resize_key += '!'
 
     cmdline = [im, source_image, '-auto-orient']
     if mode == ThumbnailMode.CROP:
-        cmdline += ['-resize', resize_key + '^',
-                    '-gravity', 'Center',
-                    '-extent', resize_key]
+        cmdline += [
+            '-resize', zoom_key,
+            '-gravity', gravity,
+            '-extent', resize_key + offset_key,
+        ]
     else:
         cmdline += ['-resize', resize_key]
 
@@ -517,7 +534,7 @@ def process_image(ctx, source_image, dst_filename,
 
 def make_image_thumbnail(ctx, source_image, source_url_path,
                          width=None, height=None, mode=ThumbnailMode.DEFAULT,
-                         upscale=None, quality=None):
+                         upscale=None, quality=None, offset=None, zoom=None, ext=None):
     """Helper method that can create thumbnails from within the build process
     of an artifact.
     """
@@ -576,9 +593,9 @@ def make_image_thumbnail(ctx, source_image, source_url_path,
             if source_width < width and source_height < height:
                 return _original()
 
-    suffix = get_suffix(width, height, mode, quality=quality)
+    suffix = get_suffix(width, height, mode, quality=quality, offset=offset, zoom=zoom)
     dst_url_path = get_dependent_url(source_url_path, suffix,
-                                     ext=get_thumbnail_ext(source_image))
+                                     ext=ext if ext else get_thumbnail_ext(source_image))
 
     if mode == ThumbnailMode.FIT:
         computed_width, computed_height = compute_dimensions(
@@ -590,7 +607,7 @@ def make_image_thumbnail(ctx, source_image, source_url_path,
     def build_thumbnail_artifact(artifact):
         artifact.ensure_dir()
         process_image(ctx, source_image, artifact.dst_filename,
-                      width, height, mode, quality=quality)
+                      width, height, mode, quality=quality, offset=offset, zoom=zoom)
 
     return Thumbnail(dst_url_path, computed_width, computed_height)
 

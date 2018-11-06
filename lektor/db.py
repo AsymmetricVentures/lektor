@@ -790,7 +790,7 @@ class Image(Attachment):
 
     def thumbnail(self,
                   width=None, height=None, crop=None, mode=None,
-                  upscale=None, quality=None):
+                  upscale=None, quality=None, offset=None, zoom=None, ext='.jpg'):
         """Utility to create thumbnails."""
 
         # `crop` exists to preserve backward-compatibility, and will be removed.
@@ -816,7 +816,7 @@ class Image(Attachment):
         return make_image_thumbnail(_require_ctx(self),
             self.attachment_filename, self.url_path,
             width=width, height=height, mode=mode,
-            upscale=upscale, quality=quality)
+            upscale=upscale, quality=quality, offset=offset, zoom=zoom, ext=ext)
 
 
 def require_ffmpeg(f):
