@@ -595,7 +595,7 @@ def make_image_thumbnail(ctx, source_image, source_url_path,
 
     suffix = get_suffix(width, height, mode, quality=quality, offset=offset, zoom=zoom)
     dst_url_path = get_dependent_url(source_url_path, suffix,
-                                     ext=ext if ext else get_thumbnail_ext(source_image))
+                                     ext= '.%s' % ext if ext else get_thumbnail_ext(source_image))
 
     if mode == ThumbnailMode.FIT:
         computed_width, computed_height = compute_dimensions(

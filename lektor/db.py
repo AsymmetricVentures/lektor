@@ -790,9 +790,10 @@ class Image(Attachment):
 
     def thumbnail(self,
                   width=None, height=None, crop=None, mode=None,
-                  upscale=None, quality=None, offset=None, zoom=None, ext='.jpg'):
+                  upscale=None, quality=None, offset=None, zoom=None, format='jpg'):
         """Utility to create thumbnails."""
-
+        
+        ext = format if format in ['jpg', 'jpeg', 'webp', 'png', 'bmp'] else None
         # `crop` exists to preserve backward-compatibility, and will be removed.
         if crop is not None and mode is not None:
             raise ValueError('Arguments `crop` and `mode` are mutually exclusive.')
