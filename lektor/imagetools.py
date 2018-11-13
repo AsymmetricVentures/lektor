@@ -296,7 +296,10 @@ def get_suffix(width, height, mode, quality=None, offset=None, zoom=None):
         suffix += '_q%s' % quality
     if offset is not None:
         # assert offset len
-        suffix += '_%+d%+d' % offset
+        h,v = offset
+        h = 'h%s%d' % (('n' if h < 0 else 'p'), abs(h))
+        v = 'v%s%d' % (('n' if v < 0 else 'p'), abs(v))
+        suffix += '_%s%s' % (h,v)
     if zoom is not None:
         suffix += '-z%d' % zoom
     return suffix
@@ -442,7 +445,7 @@ def get_thumbnail_ext(source_filename):
     ext = source_filename.rsplit('.', 1)[-1].lower()
     # if the extension is already of a format that a browser understands
     # we will roll with it.
-    if ext.lower() in ('png', 'jpg', 'jpeg', 'gif'):
+    if ext.lower() in ('png', 'jpg', 'jpeg', 'gif', 'webp'):
         return None
     # Otherwise we roll with JPEG as default.
     return '.jpeg'
